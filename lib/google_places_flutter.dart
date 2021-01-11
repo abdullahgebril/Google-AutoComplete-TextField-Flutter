@@ -1,15 +1,11 @@
 library google_places_flutter;
 
-import 'dart:convert';
-
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_places_flutter/model/place_details.dart';
 import 'package:google_places_flutter/model/prediction.dart';
-
-import 'package:rxdart/subjects.dart';
-import 'package:dio/dio.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:rxdart/subjects.dart';
 
 class GooglePlaceAutoCompleteTextField extends StatefulWidget {
   InputDecoration inputDecoration;
@@ -20,20 +16,21 @@ class GooglePlaceAutoCompleteTextField extends StatefulWidget {
   TextStyle textStyle;
   String googleAPIKey;
   int debounceTime = 600;
+
   List<String> countries = List();
   TextEditingController textEditingController = TextEditingController();
 
-  GooglePlaceAutoCompleteTextField(
-      {@required this.textEditingController,
-      @required this.googleAPIKey,
-      this.debounceTime: 600,
-      this.inputDecoration: const InputDecoration(),
-      this.itmClick,
-      this.isLatLngRequired=true,
-      this.textStyle: const TextStyle(),
-      this.countries,
-      this.getPlaceDetailWithLatLng,
-      });
+  GooglePlaceAutoCompleteTextField({
+    @required this.textEditingController,
+    @required this.googleAPIKey,
+    this.debounceTime: 600,
+    this.inputDecoration: const InputDecoration(),
+    this.itmClick,
+    this.isLatLngRequired = true,
+    this.textStyle: const TextStyle(),
+    this.countries,
+    this.getPlaceDetailWithLatLng,
+  });
 
   @override
   _GooglePlaceAutoCompleteTextFieldState createState() =>
@@ -57,6 +54,7 @@ class _GooglePlaceAutoCompleteTextFieldState
       child: TextFormField(
         decoration: widget.inputDecoration,
         style: widget.textStyle,
+        autofocus: false,
         controller: widget.textEditingController,
         onChanged: (string) => (subject.add(string)),
       ),
@@ -82,8 +80,6 @@ class _GooglePlaceAutoCompleteTextFieldState
       }
     }
 
-
-
     Response response = await dio.get(url);
     PlacesAutocompleteResponse subscriptionResponse =
         PlacesAutocompleteResponse.fromJson(response.data);
@@ -101,7 +97,6 @@ class _GooglePlaceAutoCompleteTextFieldState
     }
 
     //if (this._overlayEntry == null)
-
     this._overlayEntry = null;
     this._overlayEntry = this._createOverlayEntry();
     Overlay.of(context).insert(this._overlayEntry);
@@ -136,28 +131,40 @@ class _GooglePlaceAutoCompleteTextFieldState
                   offset: Offset(0.0, size.height + 5.0),
                   child: Material(
                       elevation: 1.0,
-                      child: ListView.builder(
-                        padding: EdgeInsets.zero,
-                        shrinkWrap: true,
-                        itemCount: alPredictions.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          return InkWell(
-                            onTap: () {
-                              if (index < alPredictions.length) {
-                                widget.itmClick(alPredictions[index]);
-                                if (!widget.isLatLngRequired) return;
+                      child: Container(
+                        color: Colors.white,
+                        child: ListView.builder(
+                          padding: EdgeInsets.zero,
+                          shrinkWrap: true,
+                          itemCount: alPredictions.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            return InkWell(
+                              onTap: () {
+                                if (index < alPredictions.length) {
+                                  widget.itmClick(alPredictions[index]);
 
-                                getPlaceDetailsFromPlaceId(
-                                    alPredictions[index]);
-
-                                removeOverlay();
-                              }
-                            },
-                            child: Container(
-                                padding: EdgeInsets.all(10),
-                                child: Text(alPredictions[index].description)),
-                          );
-                        },
+                                  if (!widget.isLatLngRequired) {
+                                    removeOverlay();
+                                    return;
+                                  }
+                                  getPlaceDetailsFromPlaceId(
+                                      alPredictions[index]);
+                                  removeOverlay();
+                                }
+                              },
+                              child: Container(
+                                color: Colors.white,
+                                padding: EdgeInsets.all(16),
+                                child: Text(
+                                  alPredictions[index].description,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       )),
                 ),
               ));
